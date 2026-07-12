@@ -3,6 +3,7 @@ package com.example.demo.matching;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -36,6 +37,11 @@ public final class MatchingController {
     @DeleteMapping("/orders/{orderId}")
     public CancelResponse cancel(@PathVariable long orderId) {
         return new CancelResponse(orderId, engine.cancel(orderId));
+    }
+
+    @GetMapping("/orders")
+    public List<NativeMatchingEngine.OpenOrder> orders() {
+        return engine.listOrders();
     }
 
     @ExceptionHandler({IllegalArgumentException.class, NullPointerException.class})

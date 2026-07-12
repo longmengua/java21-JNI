@@ -121,4 +121,41 @@ Java_com_example_demo_matching_NativeMatchingEngine_nativeCancel(
     }
 }
 
+JNIEXPORT jlongArray JNICALL
+Java_com_example_demo_matching_NativeMatchingEngine_nativeListOrders(
+    JNIEnv* env,
+    jclass,
+    const jlong handle
+) {
+    try {
+        const auto orders = engineFrom(handle)->listOrders();
+
+        std::vector<jlong> flattened;
+        flattened.reserve(orders.size() * 4);
+        for (const auto& order : orders) {
+            flattened.push_back(order.orderId);
+            flattened.push_back(static_cast<jlong>(order.side == matching::Side::Buy ? 0 : 1));
+            flattened.push_back(order.price);
+            flattened.push_back(order.quantity);
+        }
+
+        const auto output = env->NewLongArray(static_cast<jsize>(flattened.size()));
+        if (output == nullptr) {
+            return nullptr;
+        }
+        if (!flattened.empty()) {
+            env->SetLongArrayRegion(
+                output,
+                0,
+                static_cast<jsize>(flattened.size()),
+                flattened.data()
+            );
+        }
+        return output;
+    } catch (const std::exception& exception) {
+        throwJava(env, "java/lang/IllegalStateException", exception.what());
+        return nullptr;
+    }
+}
+
 } // extern "C"

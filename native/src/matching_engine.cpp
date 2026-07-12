@@ -67,6 +67,26 @@ bool MatchingEngine::cancel(const std::int64_t orderId) {
     return true;
 }
 
+std::vector<Order> MatchingEngine::listOrders() {
+    std::lock_guard lock(mutex_);
+
+    std::vector<Order> orders;
+    for (const auto& level : bids_) {
+        const auto& queue = level.second;
+        for (const auto& order : queue) {
+            orders.push_back(order);
+        }
+    }
+    for (const auto& level : asks_) {
+        const auto& queue = level.second;
+        for (const auto& order : queue) {
+            orders.push_back(order);
+        }
+    }
+
+    return orders;
+}
+
 void MatchingEngine::validateOrder(
     const std::int64_t orderId,
     const std::int64_t price,

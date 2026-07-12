@@ -60,6 +60,29 @@ public final class NativeMatchingEngine implements AutoCloseable {
         return nativeCancel(handle, orderId);
     }
 
+    public synchronized List<OpenOrder> listOrders() {
+        ensureOpen();
+
+        long[] values = nativeListOrders(handle);
+        if (values == null || values.length == 0) {
+            return List.of();
+        }
+        if (values.length % 4 != 0) {
+            throw new IllegalStateException("invalid order result returned by native engine");
+        }
+
+        List<OpenOrder> orders = new ArrayList<>(values.length / 4);
+        for (int index = 0; index < values.length; index += 4) {
+            orders.add(new OpenOrder(
+                    values[index],
+                    toSideValue(values[index + 1]),
+                    values[index + 2],
+                    values[index + 3]
+            ));
+        }
+        return List.copyOf(orders);
+    }
+
     @PreDestroy
     @Override
     public synchronized void close() {
@@ -106,12 +129,30 @@ public final class NativeMatchingEngine implements AutoCloseable {
         Side(int nativeValue) {
             this.nativeValue = nativeValue;
         }
+
+        static Side fromNativeValue(long nativeValue) {
+            if (nativeValue == BUY.nativeValue) {
+                return BUY;
+            }
+            if (nativeValue == SELL.nativeValue) {
+                return SELL;
+            }
+            throw new IllegalArgumentException("side must be 0 or 1");
+        }
     }
 
     public record Trade(
             long tradeId,
             long makerOrderId,
             long takerOrderId,
+            long price,
+            long quantity
+    ) {
+    }
+
+    public record OpenOrder(
+            long orderId,
+            int side,
             long price,
             long quantity
     ) {
@@ -130,4 +171,16 @@ public final class NativeMatchingEngine implements AutoCloseable {
     );
 
     private static native boolean nativeCancel(long handle, long orderId);
+
+    private static native long[] nativeListOrders(long handle);
+
+    private static int toSideValue(long nativeValue) {
+        if (nativeValue == Side.BUY.nativeValue) {
+            return Side.BUY.nativeValue;
+        }
+        if (nativeValue == Side.SELL.nativeValue) {
+            return Side.SELL.nativeValue;
+        }
+        throw new IllegalArgumentException("side must be 0 or 1");
+    }
 }

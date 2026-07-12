@@ -41,6 +41,7 @@ public:
     );
 
     bool cancel(std::int64_t orderId);
+    std::vector<Order> listOrders();
 
 private:
     using OrderQueue = std::list<Order>;
