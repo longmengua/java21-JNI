@@ -27,7 +27,7 @@ public final class MatchingController {
     public List<NativeMatchingEngine.Trade> submit(@RequestBody OrderRequest request) {
         return engine.submit(
                 request.orderId(),
-                request.side(),
+                toSide(request.side()),
                 request.price(),
                 request.quantity()
         );
@@ -46,12 +46,20 @@ public final class MatchingController {
 
     public record OrderRequest(
             long orderId,
-            NativeMatchingEngine.Side side,
+            int side,
             long price,
             long quantity
     ) {
     }
 
     public record CancelResponse(long orderId, boolean cancelled) {
+    }
+
+    private static NativeMatchingEngine.Side toSide(int side) {
+        return switch (side) {
+            case 1 -> NativeMatchingEngine.Side.BUY;
+            case 0 -> NativeMatchingEngine.Side.SELL;
+            default -> throw new IllegalArgumentException("side must be 1 for BUY or 0 for SELL");
+        };
     }
 }
