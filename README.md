@@ -2,10 +2,12 @@
 
 ## Curl Example
 
-`curl.sh` fetches the current resting orders from the matching API.
+`api_matching_orders_get.sh` fetches the current resting orders.
+`api_matching_orders_post.sh` submits one sample order.
 
 ```bash
-./curl.sh
+./api_matching_orders_get.sh
+./api_matching_orders_post.sh
 ```
 
 Response fields:
