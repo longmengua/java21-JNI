@@ -10,10 +10,10 @@ API_URL="$BASE_URL/api/matching"
 #   0 = SELL
 #
 # Edit these values directly when you want a different order.
-ORDER_ID=1001
-SIDE=1
-PRICE=101
-QUANTITY=10
+ORDER_ID=1003
+SIDE=0
+PRICE=100
+QUANTITY=1
 
 curl -sS -X POST "$API_URL/orders" \
   -H 'Content-Type: application/json' \
