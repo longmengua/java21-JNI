@@ -8,6 +8,7 @@
 
 namespace {
 
+// 把 Java 傳進來的 handle 還原成 C++ 物件指標。
 matching::MatchingEngine* engineFrom(const jlong handle) {
     if (handle == 0) {
         throw std::invalid_argument("native engine is closed");
@@ -15,6 +16,7 @@ matching::MatchingEngine* engineFrom(const jlong handle) {
     return reinterpret_cast<matching::MatchingEngine*>(handle);
 }
 
+// 將 C++ 例外轉成 Java 例外。
 void throwJava(JNIEnv* env, const char* className, const char* message) {
     const jclass exceptionClass = env->FindClass(className);
     if (exceptionClass != nullptr) {
@@ -26,6 +28,7 @@ void throwJava(JNIEnv* env, const char* className, const char* message) {
 
 extern "C" {
 
+// 建立新的 C++ MatchingEngine，回傳給 Java 當作 handle。
 JNIEXPORT jlong JNICALL
 Java_com_example_demo_matching_NativeMatchingEngine_nativeCreate(
     JNIEnv* env,
@@ -39,6 +42,7 @@ Java_com_example_demo_matching_NativeMatchingEngine_nativeCreate(
     }
 }
 
+// Java 關閉時呼叫，釋放 C++ 物件。
 JNIEXPORT void JNICALL
 Java_com_example_demo_matching_NativeMatchingEngine_nativeDestroy(
     JNIEnv* env,
@@ -52,6 +56,9 @@ Java_com_example_demo_matching_NativeMatchingEngine_nativeDestroy(
     }
 }
 
+// 送單並回傳成交結果。
+// 回傳格式是扁平化陣列：
+// [tradeId, makerOrderId, takerOrderId, price, quantity, ...]
 JNIEXPORT jlongArray JNICALL
 Java_com_example_demo_matching_NativeMatchingEngine_nativeSubmit(
     JNIEnv* env,
@@ -74,6 +81,7 @@ Java_com_example_demo_matching_NativeMatchingEngine_nativeSubmit(
             static_cast<std::int64_t>(quantity)
         );
 
+        // 每筆成交 5 個欄位，所以先預留 trades.size() * 5。
         std::vector<jlong> flattened;
         flattened.reserve(trades.size() * 5);
         for (const auto& trade : trades) {
@@ -84,6 +92,7 @@ Java_com_example_demo_matching_NativeMatchingEngine_nativeSubmit(
             flattened.push_back(trade.quantity);
         }
 
+        // 先建立 Java long[]，再把 C++ 內容拷貝回去。
         const auto output = env->NewLongArray(static_cast<jsize>(flattened.size()));
         if (output == nullptr) {
             return nullptr;
@@ -106,6 +115,7 @@ Java_com_example_demo_matching_NativeMatchingEngine_nativeSubmit(
     }
 }
 
+// 撤單。
 JNIEXPORT jboolean JNICALL
 Java_com_example_demo_matching_NativeMatchingEngine_nativeCancel(
     JNIEnv* env,
@@ -121,6 +131,9 @@ Java_com_example_demo_matching_NativeMatchingEngine_nativeCancel(
     }
 }
 
+// 查詢目前所有掛單。
+// 回傳格式是扁平化陣列：
+// [orderId, side, price, quantity, ...]
 JNIEXPORT jlongArray JNICALL
 Java_com_example_demo_matching_NativeMatchingEngine_nativeListOrders(
     JNIEnv* env,
@@ -130,6 +143,7 @@ Java_com_example_demo_matching_NativeMatchingEngine_nativeListOrders(
     try {
         const auto orders = engineFrom(handle)->listOrders();
 
+        // 每筆掛單 4 個欄位。
         std::vector<jlong> flattened;
         flattened.reserve(orders.size() * 4);
         for (const auto& order : orders) {
@@ -139,6 +153,7 @@ Java_com_example_demo_matching_NativeMatchingEngine_nativeListOrders(
             flattened.push_back(order.quantity);
         }
 
+        // 先建立 Java long[]，再把 C++ 資料拷貝回去。
         const auto output = env->NewLongArray(static_cast<jsize>(flattened.size()));
         if (output == nullptr) {
             return nullptr;

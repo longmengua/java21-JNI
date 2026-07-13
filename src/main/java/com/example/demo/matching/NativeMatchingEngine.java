@@ -198,7 +198,7 @@ public final class NativeMatchingEngine implements AutoCloseable {
     // [orderId, side, price, quantity, ...]
     private static native long[] nativeListOrders(long handle);
 
-    // 將 native 數字 side 轉回 Java 對外使用的數字 side。
+    // 驗證 native side 值後，回傳 0/1 這個對外約定。
     private static int toSideValue(long nativeValue) {
         return Side.fromNativeValue(nativeValue).nativeValue();
     }
